@@ -68,7 +68,8 @@ public final class StationNoticeProviderRegistry {
             if (PROVIDERS.isEmpty()) {
                 return List.of();
             }
-            providers = List.copyOf(PROVIDERS.entrySet());
+            // Detached copies: the map's own entries change when a provider is replaced while the providers run.
+            providers = PROVIDERS.entrySet().stream().map(entry -> Map.entry(entry.getKey(), entry.getValue())).toList();
         }
 
         List<StationNotice> collected = new ArrayList<>();

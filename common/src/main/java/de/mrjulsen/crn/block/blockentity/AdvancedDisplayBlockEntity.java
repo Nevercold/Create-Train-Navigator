@@ -369,7 +369,10 @@ public class AdvancedDisplayBlockEntity extends CopycatBlockEntity implements
     }
 
     public void setStationNotices(List<StationNotice> stationNotices) {
-        this.stationNotices = stationNotices == null ? List.of() : List.copyOf(stationNotices);
+        List<StationNotice> notices = stationNotices == null ? List.of() : List.copyOf(stationNotices);
+        // A display without trains only redraws when its data changed; new, edited or removed notices count as that.
+        this.dataOrderChanged = dataOrderChanged || !notices.equals(this.stationNotices);
+        this.stationNotices = notices;
     }
 
     public boolean isPlatformFixed() {
