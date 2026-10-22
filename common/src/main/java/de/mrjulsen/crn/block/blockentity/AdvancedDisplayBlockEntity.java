@@ -34,7 +34,10 @@ import de.mrjulsen.crn.data.ElevatorMovementType;
 import de.mrjulsen.crn.data.TrainExitSide;
 import de.mrjulsen.crn.data.settings.StationTag.StationInfo;
 import de.mrjulsen.crn.util.TrainUtils;
+import de.mrjulsen.crn.api.core.notice.StationNotice;
+import de.mrjulsen.crn.api.core.notice.StationNoticeProviderRegistry;
 import de.mrjulsen.crn.api.core.snapshot.BoardEntry;
+import de.mrjulsen.crn.util.NbtHelper;
 import de.mrjulsen.crn.api.core.CallDirection;
 import de.mrjulsen.crn.api.core.snapshot.JourneySnapshot;
 import de.mrjulsen.crn.api.core.snapshot.SectionSnapshot;
@@ -92,6 +95,7 @@ public class AdvancedDisplayBlockEntity extends CopycatBlockEntity implements
 
     private static final String NBT_LAST_REFRESH_TIME = "LastRefreshed";
     private static final String NBT_TRAIN_STOPS = "TrainStops";
+    private static final String NBT_STATION_NOTICES = "StationNotices";
 
     @Deprecated private static final String LEGACY_NBT_PLATFORM_WIDTH = "PlatformWidth";
     @Deprecated private static final String LEGACY_NBT_TRAIN_NAME_WIDTH = "TrainNameWidth";
@@ -109,6 +113,7 @@ public class AdvancedDisplayBlockEntity extends CopycatBlockEntity implements
 	private byte ySize = 1;
     private boolean isController;
     private List<BoardEntry> predictions;
+    private List<StationNotice> stationNotices = List.of();
     private boolean dataOrderChanged = false;
     private String stationNameFilter;
     private StationInfo stationInfo;
@@ -356,6 +361,15 @@ public class AdvancedDisplayBlockEntity extends CopycatBlockEntity implements
 
     public List<BoardEntry> getStops() {
         return predictions;
+    }
+
+    /** Notices about the station from other mods, see {@link StationNoticeProviderRegistry}. */
+    public List<StationNotice> getStationNotices() {
+        return stationNotices;
+    }
+
+    public void setStationNotices(List<StationNotice> stationNotices) {
+        this.stationNotices = stationNotices == null ? List.of() : List.copyOf(stationNotices);
     }
 
     public boolean isPlatformFixed() {
@@ -714,6 +728,10 @@ public class AdvancedDisplayBlockEntity extends CopycatBlockEntity implements
             }
             pTag.put(NBT_TRAIN_STOPS, list);
         }
+
+        if (!getStationNotices().isEmpty()) {
+            pTag.put(NBT_STATION_NOTICES, NbtHelper.writeList(getStationNotices(), StationNotice::toNbt));
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -782,6 +800,8 @@ public class AdvancedDisplayBlockEntity extends CopycatBlockEntity implements
             info,
             pTag.getLong(NBT_LAST_REFRESH_TIME)
         );
+
+        setStationNotices(NbtHelper.readList(pTag, NBT_STATION_NOTICES, StationNotice::fromNbt));
 
         if (level != null && getBlockState() != null && level.isClientSide && (!oldDisplaySettings.isInstance(displayTypeSettings) || !oldDisplayType.equals(displayTypeId))) {
             updateClient = true;
