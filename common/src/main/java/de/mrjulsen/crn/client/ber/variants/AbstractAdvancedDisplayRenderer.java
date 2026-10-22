@@ -46,6 +46,22 @@ public interface AbstractAdvancedDisplayRenderer<T extends IDisplaySettings> ext
         return content;
     }
 
+    /**
+     * The notices of the train a display is on, such as "Train divides at ...": every reason except plain delays, with
+     * their values filled in.
+     */
+    default List<Component> trainNotices(AdvancedDisplayBlockEntity blockEntity) {
+        List<Component> content = new ArrayList<>();
+        blockEntity.getTrain().ifPresent(train -> {
+            for (DelayInstance notice : train.delays()) {
+                if (notice.severity() != DelaySeverity.DELAY) {
+                    content.add(CustomLanguage.translate(notice.translationKey(), notice.displayArgs()));
+                }
+            }
+        });
+        return content;
+    }
+
     default List<Component> announcements(AdvancedDisplayBlockEntity blockEntity, BoardEntry entry, CallDirection direction) {
         List<Component> content = new ArrayList<>();
         if (entry.isCancelled()) {
